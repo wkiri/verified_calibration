@@ -25,7 +25,8 @@ def split(sequence: List[T], parts: int) -> List[List[T]]:
     return [sequence[i:i + part_size] for i in range(0, len(sequence), part_size)]
 
 
-def get_equal_bins(probs: List[float], num_bins: int=10) -> Bins:
+# These methods ignore k, but other binning methods could use it
+def get_equal_bins(probs: List[float], num_bins: int=10, k) -> Bins:
     """Get bins that contain approximately an equal number of data points."""
     sorted_probs = sorted(probs)
     binned_data = split(sorted_probs, num_bins)
@@ -39,12 +40,14 @@ def get_equal_bins(probs: List[float], num_bins: int=10) -> Bins:
     return bins
 
 
-def get_equal_prob_bins(probs: List[float], num_bins: int=10) -> Bins:
+# These methods ignore k, but other binning methods could use it
+def get_equal_prob_bins(probs: List[float], num_bins: int=10, k) -> Bins:
     return [i * 1.0 / num_bins for i in range(1, num_bins + 1)]
 
 
 def get_discrete_bins(data: List[float]) -> Bins:
     sorted_values = sorted(np.unique(data))
+    print(len(sorted_values), sorted_values)
     bins = []
     for i in range(len(sorted_values) - 1):
         mid = (sorted_values[i] + sorted_values[i+1]) / 2.0
@@ -197,15 +200,23 @@ def get_ece(probs, labels, debias=False, num_bins=15, mode='top-label'):
 
 
 def _get_ce(probs, labels, p, debias, num_bins, binning_scheme, mode='marginal'):
-    def ce_1d(probs, labels):
+    # Specify k if you'd like the binning scheme to have it
+    def ce_1d(probs, labels, k=-1):
         assert probs.shape == labels.shape
         assert len(probs.shape) == 1
         data = list(zip(probs, labels))
         if binning_scheme == get_discrete_bins:
             assert(num_bins is None)
             bins = binning_scheme(probs)
+            #print(' Using %d discrete bins' % len(bins))
         else:
-            bins = binning_scheme(probs, num_bins=num_bins)
+            if k >= 0:
+                bins = binning_scheme(probs, num_bins=num_bins, k=k)
+            else:
+                bins = binning_scheme(probs, num_bins=num_bins)
+            #print(' Requesting %d bins, using %d bins' % (num_bins, len(bins)))
+            print(bins)
+            input()
         if p == 2 and debias:
             return unbiased_l2_ce(bin(data, bins))
         elif debias:
@@ -217,7 +228,7 @@ def _get_ce(probs, labels, p, debias, num_bins, binning_scheme, mode='marginal')
     probs = np.array(probs)
     labels = np.array(labels)
     if not(np.issubdtype(labels.dtype, np.integer)):
-        raise ValueError('labels should an integer numpy array.')
+        raise ValueError('labels should be an integer numpy array.')
     if len(labels.shape) != 1:
         raise ValueError('labels should be a 1D numpy array.')
     if probs.shape[0] != labels.shape[0]:
@@ -237,7 +248,7 @@ def _get_ce(probs, labels, p, debias, num_bins, binning_scheme, mode='marginal')
             for k in range(probs.shape[1]):
                 cur_probs = probs[:, k]
                 cur_labels = labels_one_hot[:, k]
-                marginal_ces.append(ce_1d(cur_probs, cur_labels) ** p)
+                marginal_ces.append(ce_1d(cur_probs, cur_labels, k) ** p)
             return np.mean(marginal_ces) ** (1.0 / p)
         elif mode == 'top-label':
             preds = get_top_predictions(probs)
