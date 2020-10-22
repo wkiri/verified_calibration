@@ -26,7 +26,7 @@ def split(sequence: List[T], parts: int) -> List[List[T]]:
 
 
 # These methods ignore k, but other binning methods could use it
-def get_equal_bins(probs: List[float], num_bins: int=10, k) -> Bins:
+def get_equal_bins(probs: List[float], num_bins: int=10, k=-1) -> Bins:
     """Get bins that contain approximately an equal number of data points."""
     sorted_probs = sorted(probs)
     binned_data = split(sorted_probs, num_bins)
@@ -41,7 +41,7 @@ def get_equal_bins(probs: List[float], num_bins: int=10, k) -> Bins:
 
 
 # These methods ignore k, but other binning methods could use it
-def get_equal_prob_bins(probs: List[float], num_bins: int=10, k) -> Bins:
+def get_equal_prob_bins(probs: List[float], num_bins: int=10, k=-1) -> Bins:
     return [i * 1.0 / num_bins for i in range(1, num_bins + 1)]
 
 
