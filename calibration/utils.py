@@ -213,7 +213,7 @@ def _get_ce(probs, labels, p, debias, num_bins, binning_scheme, mode='marginal')
             if k >= 0:
                 bins = binning_scheme(probs, num_bins=num_bins, k=k)
             else:
-                bins = binning_scheme(probs, num_bins=num_bins)
+                bins = binning_scheme(probs, num_bins=num_bins, k=k)
             #print(' Requesting %d bins, using %d bins' % (num_bins, len(bins)))
         if p == 2 and debias:
             return unbiased_l2_ce(bin(data, bins))
