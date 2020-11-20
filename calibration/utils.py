@@ -474,8 +474,8 @@ def get_histogram_calibrator(model_probs, values, bins):
     bin_means = np.array(bin_means)
     def calibrator(probs):
         indices = np.searchsorted(bins, probs)
-        return bin_means[indices]
-    return calibrator
+        return bin_means[indices], indices
+    return calibrator, bin_means
 
 
 def get_discrete_calibrator(model_probs, bins):

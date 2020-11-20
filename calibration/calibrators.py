@@ -10,8 +10,9 @@ class HistogramCalibrator:
         self._num_bins = num_bins
 
     def train_calibration(self, zs, ys):
-        bins = utils.get_equal_bins(zs, num_bins=self._num_bins)
-        self._calibrator = utils.get_histogram_calibrator(zs, ys, bins)
+        self._bins = utils.get_equal_bins(zs, num_bins=self._num_bins)
+        (self._calibrator,
+         self._bin_means) = utils.get_histogram_calibrator(zs, ys, self._bins)
 
     def calibrate(self, zs):
         return self._calibrator(zs)
@@ -25,8 +26,10 @@ class PlattBinnerCalibrator:
     def train_calibration(self, zs, ys):
         self._platt = utils.get_platt_scaler(zs, ys)
         platt_probs = self._platt(zs)
-        bins = utils.get_equal_bins(platt_probs, num_bins=self._num_bins)
-        self._discrete_calibrator = utils.get_discrete_calibrator(platt_probs, bins)
+        self._bins = utils.get_equal_bins(platt_probs, num_bins=self._num_bins)
+        (self._discrete_calibrator,
+         self._bin_means) = utils.get_discrete_calibrator(platt_probs,
+                                                          self._bins)
 
     def calibrate(self, zs):
         platt_probs = self._platt(zs)
@@ -57,8 +60,9 @@ class HistogramTopCalibrator:
         predictions = utils.get_top_predictions(probs)
         correct = (predictions == labels)
         bins = utils.get_equal_bins(probs, num_bins=self._num_bins)
-        self._calibrator = utils.get_histogram_calibrator(
-            probs, correct, bins)
+        (self._calibrator,
+         self._bin_means) = utils.get_histogram_calibrator(
+             probs, correct, bins)
 
     def calibrate(self, probs):
         probs = utils.get_top_probs(probs)
@@ -80,8 +84,9 @@ class PlattBinnerTopCalibrator:
             probs, correct)
         platt_probs = self._platt(probs)
         bins = utils.get_equal_bins(platt_probs, num_bins=self._num_bins)
-        self._discrete_calibrator = utils.get_discrete_calibrator(
-            platt_probs, bins)
+        (self._discrete_calibrator,
+         self._bin_means) = utils.get_discrete_calibrator(
+             platt_probs, bins)
 
     def calibrate(self, probs):
         probs = self._platt(utils.get_top_probs(probs))
@@ -147,7 +152,7 @@ class HistogramMarginalCalibrator:
             probs_c = probs[:, c]
             labels_c = labels_one_hot[:, c]
             bins = utils.get_equal_bins(probs_c, num_bins=self._num_bins)
-            calibrator_c = utils.get_histogram_calibrator(probs_c, labels_c, bins)
+            (calibrator_c, _) = utils.get_histogram_calibrator(probs_c, labels_c, bins)
             self._calibrators.append(calibrator_c)
 
     def calibrate(self, probs):
@@ -194,7 +199,7 @@ class PlattBinnerMarginalCalibrator:
             self._platts.append(platt_c)
             platt_probs_c = platt_c(probs_c)
             bins = utils.get_equal_bins(platt_probs_c, num_bins=self._num_bins)
-            calibrator_c = utils.get_discrete_calibrator(platt_probs_c, bins)
+            (calibrator_c, _) = utils.get_discrete_calibrator(platt_probs_c, bins)
             self._calibrators.append(calibrator_c)
 
 
