@@ -161,7 +161,7 @@ class HistogramMarginalCalibrator:
         calibrated_probs = np.zeros(probs.shape)
         for c in range(self._k):
             probs_c = probs[:, c]
-            calibrated_probs[:, c] = self._calibrators[c](probs_c)
+            calibrated_probs[:, c] = self._calibrators[c](probs_c)[0]
         return calibrated_probs
 
 
@@ -210,5 +210,5 @@ class PlattBinnerMarginalCalibrator:
         for c in range(self._k):
             probs_c = probs[:, c]
             platt_probs_c = self._platts[c](probs_c)
-            calibrated_probs[:, c] = self._calibrators[c](platt_probs_c)
+            calibrated_probs[:, c] = self._calibrators[c](platt_probs_c)[0]
         return calibrated_probs
